@@ -2,7 +2,7 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-token
+src/main/resources/config.properties
 
 ### IntelliJ IDEA ###
 .idea/**
