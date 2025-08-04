@@ -1,10 +1,8 @@
 package com.john.mysutando.utils;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2

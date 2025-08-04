@@ -12,7 +12,7 @@ public class Bot {
 
     private final String botToken = Env.getProperty("bot.token");
 
-    public void start() throws InterruptedException {
+    void start() throws InterruptedException {
 
         EventManager eventManager = new EventManager();
 
