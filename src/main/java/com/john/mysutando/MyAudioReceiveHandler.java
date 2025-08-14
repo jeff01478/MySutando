@@ -9,10 +9,18 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 
 @Log4j2
 public class MyAudioReceiveHandler implements AudioReceiveHandler {
@@ -20,6 +28,8 @@ public class MyAudioReceiveHandler implements AudioReceiveHandler {
     // 只需要一個串流來儲存所有混合後的音訊
     private final ByteArrayOutputStream combinedAudioStream = new ByteArrayOutputStream();
     private boolean isRecording = true;
+
+    private final Queue<byte[]> audioQueue = new LinkedBlockingQueue<>(100);
 
     @Override
     public boolean canReceiveCombined() {
@@ -35,11 +45,17 @@ public class MyAudioReceiveHandler implements AudioReceiveHandler {
         // 取得混合後的 PCM 音訊資料
         byte[] mixedPcmData = combinedAudio.getAudioData(0.5); // 音量 1.0 代表原始音量
 
-        try {
-            combinedAudioStream.write(mixedPcmData);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (!audioQueue.offer(mixedPcmData)) {
+//            log.info("Audio queue is full");
+            audioQueue.poll();
+            audioQueue.add(mixedPcmData);
         }
+
+//        try {
+//            combinedAudioStream.write(mixedPcmData);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     /**
@@ -83,24 +99,14 @@ public class MyAudioReceiveHandler implements AudioReceiveHandler {
      */
     private void saveAsWav(byte[] pcmData, File outputFile) {
         try {
-            // 1. 定義音訊格式，這必須與 JDA 提供的 PCM 格式完全相符
-            // sampleRate: 48000.0F
-            // sampleSizeInBits: 16
-            // channels: 2 (Stereo)
-            // signed: true (有符號)
-            // bigEndian: false (Little-Endian)
             AudioFormat format = OUTPUT_FORMAT;
 
-            // 2. 建立一個 AudioInputStream
-            // 它將原始的 byte[] 包裝成一個可讀取的音訊串流
             AudioInputStream audioInputStream = new AudioInputStream(
                     new ByteArrayInputStream(pcmData),
                     format,
                     pcmData.length / format.getFrameSize()
             );
 
-            // 3. 使用 AudioSystem 將音訊串流寫入檔案
-            // AudioFileFormat.Type.WAVE 指定了輸出格式為 WAV
             AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, outputFile);
 
             log.info("成功儲存 WAV 檔案至: {}", outputFile.getAbsolutePath());
@@ -109,5 +115,46 @@ public class MyAudioReceiveHandler implements AudioReceiveHandler {
             log.error("儲存 WAV 檔案時發生錯誤: {}", e.getMessage());
             throw new RuntimeException();
         }
+    }
+
+    public byte[] getAudioResource() {
+        Object[] audioQueueArray = audioQueue.toArray();
+        audioQueue.clear();
+        byte[] newAudioByte = new byte[0];
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+            for (Object object : audioQueueArray) {
+                byte[] audioByte = (byte[]) object;
+                byteArrayOutputStream.write(audioByte);
+            }
+            newAudioByte = byteArrayOutputStream.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        byte[] wavByteData;
+        try {
+            wavByteData = pcmToWav(newAudioByte);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            throw new RuntimeException();
+        }
+        return wavByteData;
+    }
+
+    private byte[] pcmToWav(byte[] pcmData) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        AudioFormat format = OUTPUT_FORMAT;
+
+        AudioInputStream audioInputStream = new AudioInputStream(
+            new ByteArrayInputStream(pcmData),
+            format,
+            pcmData.length / format.getFrameSize()
+        );
+
+        AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, byteArrayOutputStream);
+
+        audioInputStream.close();
+
+        return byteArrayOutputStream.toByteArray();
     }
 }

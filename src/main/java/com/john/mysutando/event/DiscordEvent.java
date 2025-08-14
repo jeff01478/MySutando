@@ -1,7 +1,8 @@
 package com.john.mysutando.event;
 
+import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
-public abstract class DiscordEvent extends ListenerAdapter {
-
+public class DiscordEvent extends ListenerAdapter {
+    public void onTest(TestEvent event) {}
 }

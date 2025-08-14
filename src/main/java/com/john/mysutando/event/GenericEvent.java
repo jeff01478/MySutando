@@ -14,5 +14,4 @@ public class GenericEvent extends DiscordEvent {
     public void onReady(@NotNull ReadyEvent event) {
         log.info("onReady");
     }
-
 }
