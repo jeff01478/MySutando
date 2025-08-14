@@ -1,8 +1,11 @@
 package com.john.mysutando.service.impl;
 
+import java.net.MalformedURLException;
+
 import com.john.mysutando.MyAudioReceiveHandler;
 import com.john.mysutando.dto.rs.BaseRs;
 import com.john.mysutando.dto.rs.SpeakVoiceRs;
+import com.john.mysutando.dto.rs.VoiceChannelAudioRs;
 import com.john.mysutando.service.DiscordAiApiService;
 import com.john.mysutando.service.DiscordAudioService;
 import lombok.RequiredArgsConstructor;
@@ -164,6 +167,29 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         audioManager.setReceivingHandler(new MyAudioReceiveHandler());
 
         rs.setMessage("GOOD JOB!!!");
+        return rs;
+    }
+
+    @Override
+    public VoiceChannelAudioRs getVoiceChannelAudio(Long guildId) {
+        Guild guild = jda.getGuildById(guildId);
+        VoiceChannelAudioRs rs = new VoiceChannelAudioRs();
+        if (guild == null) {
+            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
+            return rs;
+        }
+
+        AudioManager audioManager = guild.getAudioManager();
+
+        MyAudioReceiveHandler myAudioReceiveHandler = (MyAudioReceiveHandler) audioManager.getReceivingHandler();
+
+        if (myAudioReceiveHandler == null) {
+            rs.setMessage("找不到語音紀錄");
+            return rs;
+        }
+
+        rs.setAudioData(myAudioReceiveHandler.getAudioResource());
+
         return rs;
     }
 }
