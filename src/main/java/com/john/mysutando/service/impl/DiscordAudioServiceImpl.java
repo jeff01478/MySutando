@@ -9,10 +9,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.managers.AudioManager;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -23,6 +25,12 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
     private final JDA jda;
     private final DiscordAiApiService discordAiApiService;
     private final AudioPlayerService audioPlayerService;
+
+    @Value("${stinkingGroup.guildId}")
+    private String stinkingGroupId;
+
+    @Value("${stinkingGroup.voiceToTextChannelId}")
+    private String stinkingGroupTextChannelId;
 
     @Override
     public BaseRs joinVoiceChannel(Long guildId, Long voiceChannelId, boolean startListen) {
@@ -95,6 +103,13 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         audioManager.setSendingHandler(audioPlayerService.getAudioSendHandler());
 
         audioPlayerService.loadAndPlay(text);
+
+        if (guildId.equals(stinkingGroupId)) {
+            TextChannel textChannel = guild.getTextChannelById(stinkingGroupTextChannelId);
+            if (textChannel != null) {
+                textChannel.sendMessage(text).queue();
+            }
+        }
 
         rs.setMessage("GOOD JOB!!!");
         rs.setSpeakMessage(text);
