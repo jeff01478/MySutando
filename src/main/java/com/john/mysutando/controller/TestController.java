@@ -1,12 +1,14 @@
 package com.john.mysutando.controller;
 
+import com.john.mysutando.event.DiscordEvent;
 import com.john.mysutando.event.EventManager;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
-import net.dv8tion.jda.api.managers.AudioManager;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,18 +23,19 @@ public class TestController {
 
     @GetMapping("/test")
     String getGood() {
-        log.info("{}", eventManager.getAllEvent());
-        long guildId = 1402596588987220050L;
-        Guild guild = jda.getGuildById(guildId);
+        Guild guild = jda.getGuildById("682954755890216960");
 
-        AudioManager audioManager = guild.getAudioManager();
+        System.out.println(guild.getMembers());
+//
+//        Member member = guild.getMemberById("682651533003063409");
+//
+//        User user = member.getUser();
+//
+//        System.out.println(user.getMutualGuilds());
 
-        AudioChannelUnion audioChannelUnion = audioManager.getConnectedChannel();
-
-        System.out.println(audioChannelUnion);
-
-        System.out.println(audioChannelUnion.getId());
-
+//        User user = jda.getUserById("682651533003063409");
+//        System.out.println(user);
+//        System.out.println(user.getMutualGuilds());
         return "GOOD";
     }
 }

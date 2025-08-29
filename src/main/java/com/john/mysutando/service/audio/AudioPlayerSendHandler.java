@@ -1,4 +1,4 @@
-package com.john.mysutando;
+package com.john.mysutando.service.audio;
 
 import net.dv8tion.jda.api.audio.AudioSendHandler;
 import java.nio.ByteBuffer;

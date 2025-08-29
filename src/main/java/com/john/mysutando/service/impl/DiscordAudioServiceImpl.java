@@ -1,8 +1,10 @@
 package com.john.mysutando.service.impl;
 
-import com.john.mysutando.MyAudioReceiveHandler;
+import com.john.mysutando.service.audio.AudioPlayerService;
+import com.john.mysutando.service.audio.GuildAudioReceiveHandler;
 import com.john.mysutando.dto.rs.BaseRs;
 import com.john.mysutando.dto.rs.SpeakVoiceRs;
+import com.john.mysutando.dto.rs.VoiceChannelAudioRs;
 import com.john.mysutando.service.DiscordAiApiService;
 import com.john.mysutando.service.DiscordAudioService;
 import lombok.RequiredArgsConstructor;
@@ -15,16 +17,19 @@ import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.managers.AudioManager;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 @Log4j2
 @Service
+@Scope("prototype")
 @RequiredArgsConstructor
 public class DiscordAudioServiceImpl implements DiscordAudioService {
 
     private final JDA jda;
     private final DiscordAiApiService discordAiApiService;
     private final AudioPlayerService audioPlayerService;
+    private final GuildAudioReceiveHandler guildAudioReceiveHandler;
 
     @Value("${stinkingGroup.guildId}")
     private String stinkingGroupId;
@@ -66,7 +71,7 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
 
         // 是否開始監聽
         if (startListen) {
-            audioManager.setReceivingHandler(new MyAudioReceiveHandler());
+            audioManager.setReceivingHandler(guildAudioReceiveHandler);
         }
 
         baseRs.setMessage("GOOD JOB!!!");
@@ -128,13 +133,13 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
 
         AudioManager audioManager = guild.getAudioManager();
 
-        MyAudioReceiveHandler myAudioReceiveHandler = (MyAudioReceiveHandler) audioManager.getReceivingHandler();
+        GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
 
-        if (myAudioReceiveHandler == null) {
+        if (guildAudioReceiveHandler == null) {
             rs.setMessage("找不到語音紀錄");
             return rs;
         }
-        myAudioReceiveHandler.stopAndSaveAsWav("received_audio");
+        guildAudioReceiveHandler.stopAndSaveAsWav("received_audio");
         rs.setMessage("GOOD JOB!!!");
         return rs;
     }
@@ -161,9 +166,32 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
             return rs;
         }
 
-        audioManager.setReceivingHandler(new MyAudioReceiveHandler());
+        audioManager.setReceivingHandler(guildAudioReceiveHandler);
 
         rs.setMessage("GOOD JOB!!!");
+        return rs;
+    }
+
+    @Override
+    public VoiceChannelAudioRs getVoiceChannelAudio(Long guildId) {
+        Guild guild = jda.getGuildById(guildId);
+        VoiceChannelAudioRs rs = new VoiceChannelAudioRs();
+        if (guild == null) {
+            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
+            return rs;
+        }
+
+        AudioManager audioManager = guild.getAudioManager();
+
+        GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
+
+        if (guildAudioReceiveHandler == null) {
+            rs.setMessage("找不到語音紀錄");
+            return rs;
+        }
+
+        rs.setAudioData(guildAudioReceiveHandler.getAudioResource());
+
         return rs;
     }
 }

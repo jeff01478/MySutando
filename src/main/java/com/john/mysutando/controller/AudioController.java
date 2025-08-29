@@ -2,11 +2,16 @@ package com.john.mysutando.controller;
 
 import com.john.mysutando.dto.rq.SpeakVoiceRq;
 import com.john.mysutando.dto.rs.BaseRs;
+import com.john.mysutando.dto.rs.VoiceChannelAudioRs;
 import com.john.mysutando.service.DiscordAudioService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,5 +78,16 @@ public class AudioController {
             return ResponseEntity.badRequest().body(rs);
         }
         return ResponseEntity.ok(discordAudioService.startListen(guildId));
+    }
+
+    @GetMapping("/getVoiceChannelAudio")
+    ResponseEntity<BaseRs> getVoiceChannelAudio(@RequestParam("guildId") Long guildId) {
+        VoiceChannelAudioRs rs = new VoiceChannelAudioRs();
+        if (guildId == null) {
+            rs.setMessage("guildId 怎麼是空的，搞什麼飛機");
+            return ResponseEntity.badRequest().body(rs);
+        }
+
+        return ResponseEntity.ok(discordAudioService.getVoiceChannelAudio(guildId));
     }
 }
