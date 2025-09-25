@@ -7,6 +7,7 @@ import com.john.mysutando.service.DiscordAudioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,7 +54,7 @@ public class AudioController {
         return ResponseEntity.ok(discordAudioService.speakVoice(guildId, voiceChannelId, text));
     }
 
-    @Operation(summary = "停止監聽語音頻道，並保存音檔", description = "guildId: 要 bot 停止監聽的伺服器")
+    @Operation(summary = "停止錄音語音頻道，並保存音檔", description = "guildId: 要 bot 停止監聽的伺服器")
     @GetMapping("/stopListen")
     ResponseEntity<BaseRs> stopListen(@RequestParam("guildId") Long guildId) {
         BaseRs rs = new BaseRs();
@@ -61,7 +62,7 @@ public class AudioController {
             rs.setMessage("guildId 怎麼是空的，搞什麼飛機");
             return ResponseEntity.badRequest().body(rs);
         }
-        return ResponseEntity.ok(discordAudioService.stopListen(guildId));
+        return ResponseEntity.ok(discordAudioService.stopRecording(guildId));
     }
 
     @Operation(summary = "開始監聽語音頻道")
