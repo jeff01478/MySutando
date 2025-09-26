@@ -1,8 +1,6 @@
 package com.john.mysutando.config;
 
-import java.util.List;
-
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -10,16 +8,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
-@ConfigurationProperties(prefix = "whitelist")
 @RequiredArgsConstructor
 public class CorsConfig implements WebMvcConfigurer {
 
-    private final List<String> origins;
+    @Value("${whitelist.origins}")
+    String[] origins;
 
     @Override
     public void addCorsMappings(CorsRegistry corsRegistry) {
         corsRegistry.addMapping("/**")
-            .allowedOrigins(origins.toArray(new String[0]))
+            .allowedOrigins(origins)
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowedHeaders("*");
     }

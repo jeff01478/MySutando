@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "語音相關API")
+@Tag(name = "語音相關 API")
 @RequestMapping(value = "/api/audio")
 public class AudioController {
 
     private final DiscordAudioService discordAudioService;
 
-    @Operation(summary = "將Bot加入到語音頻道", description = "若希望 bot 加入語音時直接開始監聽語音，要把 startListen 設為 true")
+    @Operation(summary = "將 Bot 加入到語音頻道", description = "若希望 bot 加入語音時直接開始監聽語音，要把 startListen 設為 true")
     @GetMapping("/joinVoiceChannel")
     ResponseEntity<BaseRs> joinVoiceChannel(@RequestParam("guildId") Long guildId,
                                             @RequestParam("voiceChannelId") Long voiceChannelId,
@@ -37,7 +37,7 @@ public class AudioController {
         return ResponseEntity.ok(discordAudioService.joinVoiceChannel(guildId, voiceChannelId, startListen));
     }
 
-    @Operation(summary = "讓bot說話", description = "會照著text內容播放語音，若bot已經在要說話的語音頻道可以不用帶channelId")
+    @Operation(summary = "讓 bot 說話", description = "會照著 text 內容播放語音，若 bot 已經在要說話的語音頻道可以不用帶channelId")
     @PostMapping("/speakVoice")
     ResponseEntity<BaseRs> sendTextToVoice(@RequestBody SpeakVoiceRq rq) {
         String guildId = rq.getGuildId();
@@ -53,15 +53,26 @@ public class AudioController {
         return ResponseEntity.ok(discordAudioService.speakVoice(guildId, voiceChannelId, text));
     }
 
-    @Operation(summary = "停止監聽語音頻道，並保存音檔", description = "guildId: 要 bot 停止監聽的伺服器")
-    @GetMapping("/stopListen")
-    ResponseEntity<BaseRs> stopListen(@RequestParam("guildId") Long guildId) {
+    @Operation(summary = "開始錄音語音頻道，並保存音檔")
+    @GetMapping("/startRecording")
+    ResponseEntity<BaseRs> startRecording(@RequestParam("guildId") Long guildId) {
         BaseRs rs = new BaseRs();
         if (guildId == null) {
             rs.setMessage("guildId 怎麼是空的，搞什麼飛機");
             return ResponseEntity.badRequest().body(rs);
         }
-        return ResponseEntity.ok(discordAudioService.stopListen(guildId));
+        return ResponseEntity.ok(discordAudioService.startRecording(guildId));
+    }
+
+    @Operation(summary = "停止錄音語音頻道，並保存音檔")
+    @GetMapping("/stopRecording")
+    ResponseEntity<BaseRs> stopRecording(@RequestParam("guildId") Long guildId) {
+        BaseRs rs = new BaseRs();
+        if (guildId == null) {
+            rs.setMessage("guildId 怎麼是空的，搞什麼飛機");
+            return ResponseEntity.badRequest().body(rs);
+        }
+        return ResponseEntity.ok(discordAudioService.stopRecording(guildId));
     }
 
     @Operation(summary = "開始監聽語音頻道")
@@ -73,5 +84,27 @@ public class AudioController {
             return ResponseEntity.badRequest().body(rs);
         }
         return ResponseEntity.ok(discordAudioService.startListen(guildId));
+    }
+
+    @Operation(summary = "停止監聽語音頻道")
+    @GetMapping("/stopListen")
+    ResponseEntity<BaseRs> stopListen(@RequestParam("guildId") Long guildId) {
+        BaseRs rs = new BaseRs();
+        if (guildId == null) {
+            rs.setMessage("guildId 怎麼是空的，搞什麼飛機");
+            return ResponseEntity.badRequest().body(rs);
+        }
+        return ResponseEntity.ok(discordAudioService.stopListen(guildId));
+    }
+
+    @Operation(summary = "中斷語音連線")
+    @GetMapping("/leaveVoiceChannel")
+    ResponseEntity<BaseRs> leaveVoiceChannel(@RequestParam("guildId") Long guildId) {
+        BaseRs rs = new BaseRs();
+        if (guildId == null) {
+            rs.setMessage("guildId 怎麼是空的，搞什麼飛機");
+            return ResponseEntity.badRequest().body(rs);
+        }
+        return ResponseEntity.ok(discordAudioService.leaveVoiceChannel(guildId));
     }
 }
