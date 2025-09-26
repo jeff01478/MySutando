@@ -1,10 +1,14 @@
 package com.john.mysutando.service.impl;
 
-import com.john.mysutando.MyAudioReceiveHandler;
+import java.io.IOException;
+
+import com.john.mysutando.service.audio.AudioPlayerService;
+import com.john.mysutando.service.audio.GuildAudioReceiveHandler;
 import com.john.mysutando.dto.rs.BaseRs;
 import com.john.mysutando.dto.rs.SpeakVoiceRs;
-import com.john.mysutando.service.DiscordAiApiService;
 import com.john.mysutando.service.DiscordAudioService;
+import com.john.mysutando.service.audio.GuildAudioReceiveHandlerFactory;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.JDA;
@@ -23,8 +27,8 @@ import org.springframework.stereotype.Service;
 public class DiscordAudioServiceImpl implements DiscordAudioService {
 
     private final JDA jda;
-    private final DiscordAiApiService discordAiApiService;
     private final AudioPlayerService audioPlayerService;
+    private final GuildAudioReceiveHandlerFactory guildAudioReceiveHandlerFactory;
 
     @Value("${stinkingGroup.guildId}")
     private String stinkingGroupId;
@@ -66,7 +70,9 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
 
         // 是否開始監聽
         if (startListen) {
-            audioManager.setReceivingHandler(new MyAudioReceiveHandler());
+            GuildAudioReceiveHandler guildAudioReceiveHandler = guildAudioReceiveHandlerFactory.createInstance(guildId);
+            audioManager.setReceivingHandler(guildAudioReceiveHandler);
+            guildAudioReceiveHandler.startListen();
         }
 
         baseRs.setMessage("GOOD JOB!!!");
@@ -117,7 +123,7 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
     }
 
     @Override
-    public BaseRs stopListen(Long guildId) {
+    public BaseRs startRecording(Long guildId) {
         BaseRs rs = new BaseRs();
         Guild guild = jda.getGuildById(guildId);
 
@@ -128,13 +134,43 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
 
         AudioManager audioManager = guild.getAudioManager();
 
-        MyAudioReceiveHandler myAudioReceiveHandler = (MyAudioReceiveHandler) audioManager.getReceivingHandler();
+        if (audioManager.getConnectedChannel() == null) {
+            rs.setMessage("請先將 bot 加入語音頻道");
+            return rs;
+        }
 
-        if (myAudioReceiveHandler == null) {
+        GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
+
+        if (guildAudioReceiveHandler == null) {
+            guildAudioReceiveHandler = guildAudioReceiveHandlerFactory.createInstance(guildId);
+            audioManager.setReceivingHandler(guildAudioReceiveHandler);
+        }
+
+        guildAudioReceiveHandler.startRecording();
+
+        rs.setMessage("GOOD JOB!!!");
+        return rs;
+    }
+
+    @Override
+    public BaseRs stopRecording(Long guildId) {
+        BaseRs rs = new BaseRs();
+        Guild guild = jda.getGuildById(guildId);
+
+        if (guild == null) {
+            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
+            return rs;
+        }
+
+        AudioManager audioManager = guild.getAudioManager();
+
+        GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
+
+        if (guildAudioReceiveHandler == null) {
             rs.setMessage("找不到語音紀錄");
             return rs;
         }
-        myAudioReceiveHandler.stopAndSaveAsWav("received_audio");
+        guildAudioReceiveHandler.stopRecordingAndSaveAsWav("received_audio");
         rs.setMessage("GOOD JOB!!!");
         return rs;
     }
@@ -156,12 +192,77 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
             return rs;
         }
 
-        if (audioManager.getReceivingHandler() != null) {
-            rs.setMessage("bot 已經在語音頻道監聽中，若要重新監聽請先停止");
+        GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
+
+        if (guildAudioReceiveHandler == null) {
+            guildAudioReceiveHandler = guildAudioReceiveHandlerFactory.createInstance(guildId);
+            audioManager.setReceivingHandler(guildAudioReceiveHandler);
+        }
+
+        guildAudioReceiveHandler.startListen();
+
+        rs.setMessage("GOOD JOB!!!");
+        return rs;
+    }
+
+    @Override
+    public BaseRs stopListen(Long guildId) {
+        BaseRs rs = new BaseRs();
+        Guild guild = jda.getGuildById(guildId);
+
+        if (guild == null) {
+            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
             return rs;
         }
 
-        audioManager.setReceivingHandler(new MyAudioReceiveHandler());
+        AudioManager audioManager = guild.getAudioManager();
+
+        if (audioManager.getConnectedChannel() == null) {
+            rs.setMessage("bot 不在語音頻道");
+            return rs;
+        }
+
+        GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
+
+        if (guildAudioReceiveHandler == null) {
+            rs.setMessage("bot 不在語音頻道");
+            return rs;
+        }
+
+        guildAudioReceiveHandler.stopListen();
+
+        rs.setMessage("GOOD JOB!!!");
+        return rs;
+    }
+
+    @Override
+    public BaseRs leaveVoiceChannel(Long guildId) {
+        BaseRs rs = new BaseRs();
+        Guild guild = jda.getGuildById(guildId);
+
+        if (guild == null) {
+            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
+            return rs;
+        }
+
+        AudioManager audioManager = guild.getAudioManager();
+
+        if (audioManager.getConnectedChannel() == null) {
+            rs.setMessage("bot 不在語音頻道");
+            return rs;
+        }
+
+        audioManager.closeAudioConnection();
+
+        try {
+            if (audioManager.getReceivingHandler() instanceof GuildAudioReceiveHandler guildAudioReceiveHandler) {
+                guildAudioReceiveHandler.closeResource();
+            }
+        } catch (IOException e) {
+            log.error("清除資源時發生 I/O 錯誤", e);
+        } finally {
+            audioManager.setReceivingHandler(null);
+        }
 
         rs.setMessage("GOOD JOB!!!");
         return rs;
