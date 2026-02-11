@@ -26,6 +26,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DiscordAudioServiceImpl implements DiscordAudioService {
 
+    private static final String GUILD_NOT_FIND_ERROR_MESSAGE = "找不到bot所屬的伺服器: ";
+    private static final String VOICE_CHANNEL_NOT_FIND_ERROR_MESSAGE = "找不到該語音頻道: ";
+
     private final JDA jda;
     private final AudioPlayerService audioPlayerService;
     private final GuildAudioReceiveHandlerFactory guildAudioReceiveHandlerFactory;
@@ -42,15 +45,13 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         Guild guild = jda.getGuildById(guildId);
 
         if (guild == null) {
-            baseRs.setMessage("找不到bot所屬的伺服器: " + guildId);
-            return baseRs;
+            throw new IllegalArgumentException(GUILD_NOT_FIND_ERROR_MESSAGE + guildId);
         }
 
         VoiceChannel voiceChannel = guild.getVoiceChannelById(voiceChannelId);
 
         if (voiceChannel == null) {
-            baseRs.setMessage("找不到該語音頻道: " + voiceChannelId);
-            return baseRs;
+            throw new IllegalArgumentException(VOICE_CHANNEL_NOT_FIND_ERROR_MESSAGE + voiceChannelId);
         }
 
         AudioManager audioManager = guild.getAudioManager();
@@ -61,8 +62,7 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         if (audioChannelUnion != null) {
             String audioChannelId = audioChannelUnion.getId();
             if (Long.decode(audioChannelId).equals(voiceChannelId)) {
-                baseRs.setMessage("bot已經在該語音頻道: " + voiceChannel.getName());
-                return baseRs;
+                throw new IllegalStateException("bot已經在該語音頻道: " + voiceChannel.getName());
             }
         }
 
@@ -86,8 +86,7 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         Guild guild = jda.getGuildById(guildId);
 
         if (guild == null) {
-            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
-            return rs;
+            throw new IllegalArgumentException(GUILD_NOT_FIND_ERROR_MESSAGE + guildId);
         }
 
         AudioManager audioManager = guild.getAudioManager();
@@ -95,13 +94,11 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         // 確保 bot 已經連線到語音頻道
         if (audioManager.getConnectedChannel() == null) {
             if (voiceChannelId == null || voiceChannelId.isEmpty()) {
-                rs.setMessage("voiceChannelId 怎麼是空的，搞什麼飛機");
-                return rs;
+                throw new IllegalArgumentException("voiceChannelId 怎麼是空的，搞什麼飛機");
             }
             VoiceChannel voiceChannel = guild.getVoiceChannelById(voiceChannelId);
             if (voiceChannel == null) {
-                rs.setMessage("找不到該語音頻道: " + voiceChannelId);
-                return rs;
+                throw new IllegalArgumentException(VOICE_CHANNEL_NOT_FIND_ERROR_MESSAGE + voiceChannelId);
             }
             audioManager.openAudioConnection(voiceChannel);
         }
@@ -128,15 +125,13 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         Guild guild = jda.getGuildById(guildId);
 
         if (guild == null) {
-            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
-            return rs;
+            throw new IllegalArgumentException(GUILD_NOT_FIND_ERROR_MESSAGE + guildId);
         }
 
         AudioManager audioManager = guild.getAudioManager();
 
         if (audioManager.getConnectedChannel() == null) {
-            rs.setMessage("請先將 bot 加入語音頻道");
-            return rs;
+            throw new IllegalStateException("請先將 bot 加入語音頻道");
         }
 
         GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
@@ -158,8 +153,7 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         Guild guild = jda.getGuildById(guildId);
 
         if (guild == null) {
-            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
-            return rs;
+            throw new IllegalArgumentException(GUILD_NOT_FIND_ERROR_MESSAGE + guildId);
         }
 
         AudioManager audioManager = guild.getAudioManager();
@@ -167,8 +161,7 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
 
         if (guildAudioReceiveHandler == null) {
-            rs.setMessage("找不到語音紀錄");
-            return rs;
+            throw new IllegalStateException("目前沒有進行錄音");
         }
         guildAudioReceiveHandler.stopRecordingAndSaveAsWav("received_audio");
         rs.setMessage("GOOD JOB!!!");
@@ -181,15 +174,13 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         Guild guild = jda.getGuildById(guildId);
 
         if (guild == null) {
-            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
-            return rs;
+            throw new IllegalArgumentException(GUILD_NOT_FIND_ERROR_MESSAGE + guildId);
         }
 
         AudioManager audioManager = guild.getAudioManager();
 
         if (audioManager.getConnectedChannel() == null) {
-            rs.setMessage("請先將 bot 加入語音頻道");
-            return rs;
+            throw new IllegalStateException("請先將 bot 加入語音頻道");
         }
 
         GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
@@ -211,22 +202,19 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         Guild guild = jda.getGuildById(guildId);
 
         if (guild == null) {
-            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
-            return rs;
+            throw new IllegalArgumentException(GUILD_NOT_FIND_ERROR_MESSAGE + guildId);
         }
 
         AudioManager audioManager = guild.getAudioManager();
 
         if (audioManager.getConnectedChannel() == null) {
-            rs.setMessage("bot 不在語音頻道");
-            return rs;
+            throw new IllegalStateException("bot 不在語音頻道");
         }
 
         GuildAudioReceiveHandler guildAudioReceiveHandler = (GuildAudioReceiveHandler) audioManager.getReceivingHandler();
 
         if (guildAudioReceiveHandler == null) {
-            rs.setMessage("bot 不在語音頻道");
-            return rs;
+            throw new IllegalStateException("bot 不在語音頻道");
         }
 
         guildAudioReceiveHandler.stopListen();
@@ -241,15 +229,13 @@ public class DiscordAudioServiceImpl implements DiscordAudioService {
         Guild guild = jda.getGuildById(guildId);
 
         if (guild == null) {
-            rs.setMessage("找不到bot所屬的伺服器: " + guildId);
-            return rs;
+            throw new IllegalArgumentException(GUILD_NOT_FIND_ERROR_MESSAGE + guildId);
         }
 
         AudioManager audioManager = guild.getAudioManager();
 
         if (audioManager.getConnectedChannel() == null) {
-            rs.setMessage("bot 不在語音頻道");
-            return rs;
+            throw new IllegalStateException("bot 不在語音頻道");
         }
 
         audioManager.closeAudioConnection();
