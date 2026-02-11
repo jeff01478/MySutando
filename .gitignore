@@ -3,6 +3,7 @@
 !**/src/main/**/target/
 !**/src/test/**/target/
 **/application.yml
+**/src/main/**/test
 
 ### IntelliJ IDEA ###
 .idea/**
