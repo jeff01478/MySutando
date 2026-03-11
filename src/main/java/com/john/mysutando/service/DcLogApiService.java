@@ -13,6 +13,8 @@ public interface DcLogApiService {
 
     void uploadBatchMessages(List<MessageRq> messageRqList);
 
+    List<String> getWhitelistIds();
+
     void finishSyncMode();
 
     boolean isSyncing();

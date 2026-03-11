@@ -42,8 +42,5 @@ public class MessageEvent extends DiscordEvent {
 
     @Override
     public void onMessageDelete(@Nonnull MessageDeleteEvent event) {
-        event.getMessageId();
-//        JDA jda = event.getGuild().getJDA().getMessage;
-        String id = event.getMessageId();
     }
 }

@@ -36,7 +36,8 @@ public class DcLogApiServiceImpl implements DcLogApiService {
     @Value("${dclog.port}")
     private String port;
 
-    private static final String MESSAGE_PATH = "/api/v1/messages";
+    private static final String MESSAGE_PATH = "api/v1/messages";
+    private static final String WHITELIST_PATH = "api/vi/whitelist";
     private static final String BACKUP_FILE = "log_queue_backup.json";
 
     private final ApiClient apiClient;
@@ -71,7 +72,7 @@ public class DcLogApiServiceImpl implements DcLogApiService {
     private void handleIncomingLog(QueuedLog logRequest) {
         synchronized (stateLock) {
             // 如果還在歷史同步階段，把即時訊息關禁閉
-            if (isSyncing.get()) {
+            if (isSyncing()) {
                 liveBufferQueue.offer(logRequest);
                 log.info("系統同步中，即時訊息已被放入緩衝區 (緩衝數量: {})", liveBufferQueue.size());
                 return;
@@ -84,14 +85,20 @@ public class DcLogApiServiceImpl implements DcLogApiService {
 
     @Override
     public String getLastSyncId(String channelId) {
-        String url = getBaseUrl() + "/sync/" + channelId;
+        String url = getBaseUrl(MESSAGE_PATH) + "/sync/" + channelId;
         return apiClient.get(url, null, String.class);
     }
 
     @Override
     public void uploadBatchMessages(List<MessageRq> messageRqList) {
-        String url = getBaseUrl() + "/batch";
+        String url = getBaseUrl(MESSAGE_PATH) + "/batch";
         apiClient.post(url, messageRqList, null, Void.class);
+    }
+
+    @Override
+    public List<String> getWhitelistIds() {
+        String url = getBaseUrl(WHITELIST_PATH);
+        return apiClient.get(url, null, List.class);
     }
 
     private void processOrQueue(QueuedLog logRequest) {
@@ -111,7 +118,7 @@ public class DcLogApiServiceImpl implements DcLogApiService {
 
     // 實際執行 HTTP 請求的方法
     private void sendToApi(QueuedLog logRequest) {
-        String url = getBaseUrl();
+        String url = getBaseUrl(MESSAGE_PATH);
 
         switch (logRequest.getType()) {
             case CREATE:
@@ -124,8 +131,8 @@ public class DcLogApiServiceImpl implements DcLogApiService {
         }
     }
 
-    private String getBaseUrl() {
-        return domain + ":" + port + MESSAGE_PATH;
+    private String getBaseUrl(String path) {
+        return domain + ":" + port + "/" + path;
     }
 
     @Override
