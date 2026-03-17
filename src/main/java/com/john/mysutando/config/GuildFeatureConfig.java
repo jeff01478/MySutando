@@ -18,6 +18,9 @@ public class GuildFeatureConfig {
     private Map<String, Set<GuildFeature>> guildSettings;
 
     public boolean hasFeature(String guildId, GuildFeature feature) {
+        log.info("guildSetting: {}", guildSettings);
+        log.info("guildId: {}", guildId);
+        log.info("feature: {}", feature);
         if (guildSettings == null || !guildSettings.containsKey(guildId)) {
             return false;
         }
