@@ -1,8 +1,13 @@
-package com.john.mysutando.controller;
+package com.john.mysutando.exception;
 
 import com.john.mysutando.dto.rs.ErrorRs;
+import com.john.mysutando.event.DiscordEmergencyAlertEvent;
+
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -17,7 +22,10 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final ApplicationEventPublisher eventPublisher;
 
     // 處理 Spring Validation (@Valid, @NotNull) 拋出的錯誤
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -131,6 +139,10 @@ public class GlobalExceptionHandler {
         HttpServletRequest request) {
 
         log.error("發生未預期的錯誤", ex);
+
+        eventPublisher.publishEvent(new DiscordEmergencyAlertEvent(
+            "API 炸裂: " + request.getRequestURI(), ex
+        ));
 
         ErrorRs errorRs = ErrorRs.builder()
             .timestamp(LocalDateTime.now())

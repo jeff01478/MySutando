@@ -63,11 +63,7 @@ public class DiscordTextServiceImpl implements DiscordTextService {
     @Override
     public void recordMessage(Message message) {
         MessageRq rq = messageMapper.toMessageRq(message);
-        try {
-            dcLogApiService.receiveMessage(rq);
-        } catch (RuntimeException e) {
-            log.error("訊息紀錄失敗");
-        }
+        dcLogApiService.receiveMessage(rq);
     }
 
     private void doImpersonate(Webhook webhook, Member member, String message) {

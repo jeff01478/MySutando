@@ -8,6 +8,7 @@ import com.john.mysutando.enums.GuildFeature;
 import com.john.mysutando.mapper.MessageMapper;
 import com.john.mysutando.service.DcLogApiService;
 import com.john.mysutando.service.DiscordSyncService;
+import com.john.mysutando.util.SystemLifecycleManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class DiscordSyncServiceImpl implements DiscordSyncService {
     private final DcLogApiService dcLogApiService;
     private final MessageMapper messageMapper;
     private final ApplicationContext applicationContext;
+    private final SystemLifecycleManager systemLifecycleManager;
 
     @Async
     @Override

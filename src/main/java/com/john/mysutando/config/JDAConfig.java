@@ -1,7 +1,7 @@
 package com.john.mysutando.config;
 
-import com.john.mysutando.event.EventManager;
-import lombok.AllArgsConstructor;
+import com.john.mysutando.event.jda.EventManager;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.JDA;

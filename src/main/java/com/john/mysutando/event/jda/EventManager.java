@@ -1,4 +1,4 @@
-package com.john.mysutando.event;
+package com.john.mysutando.event.jda;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
