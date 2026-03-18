@@ -1,3 +1,3 @@
 package com.john.mysutando.event;
 
-public record DiscordEmergencyAlertEvent(String context, Throwable exception) {}
+public record DiscordEmergencyAlertEvent(String context, Throwable exception, boolean requireShutdown) {}

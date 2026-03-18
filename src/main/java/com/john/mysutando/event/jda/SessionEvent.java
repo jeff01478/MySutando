@@ -2,8 +2,12 @@ package com.john.mysutando.event.jda;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
+import com.john.mysutando.event.DiscordEmergencyAlertEvent;
+import com.john.mysutando.event.SystemShutdownEvent;
+import com.john.mysutando.exception.ApiException;
 import com.john.mysutando.service.DiscordSyncService;
 
 import jakarta.annotation.Nonnull;

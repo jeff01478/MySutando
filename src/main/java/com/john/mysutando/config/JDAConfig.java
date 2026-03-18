@@ -25,9 +25,10 @@ public class JDAConfig {
     @Bean
     public JDA jda() throws InterruptedException {
         JDA jda = JDABuilder.createDefault(botToken)
-                .addEventListeners(eventManager.getAllEventListener().toArray())
-                .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_WEBHOOKS)
-                .build();
+            .setEventManager(eventManager)
+            .addEventListeners(eventManager.getAllEventListener().toArray())
+            .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_WEBHOOKS)
+            .build();
 
         log.info("已啟動Bot");
         return jda;

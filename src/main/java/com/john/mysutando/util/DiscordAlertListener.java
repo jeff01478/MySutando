@@ -1,20 +1,25 @@
-package com.john.mysutando.service.alert;
+package com.john.mysutando.util;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.utils.FileUpload;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import com.john.mysutando.event.DiscordEmergencyAlertEvent;
+import com.john.mysutando.event.SystemShutdownEvent;
 
 @Slf4j
 @Component
@@ -24,10 +29,12 @@ public class DiscordAlertListener {
     private String adminChannelId;
 
     private final JDA jda;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Async
     @EventListener
     public void onEmergencyAlert(DiscordEmergencyAlertEvent event) {
+        log.info("發送 discord 錯誤訊息給猴子");
         try {
             TextChannel adminChannel = jda.getTextChannelById(adminChannelId);
             if (adminChannel == null) {
@@ -38,10 +45,6 @@ public class DiscordAlertListener {
 
             String stackTrace = getStackTraceAsString(event.exception());
 
-            if (stackTrace.length() > 1000) {
-                stackTrace = stackTrace.substring(0, 1000) + "\n......";
-            }
-
             String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
             String alertMsg = String.format(
@@ -51,20 +54,25 @@ public class DiscordAlertListener {
                     **context:** %s
                     **message error:** `%s`
                     **stack trace:**
-                    ```java
-                    %s
-                    ```
                 """,
                 time,
                 event.context(),
-                event.exception().getMessage(),
-                stackTrace
+                event.exception().getMessage()
             );
 
-            adminChannel.sendMessage(alertMsg).queue();
+            byte[] fileData = stackTrace.getBytes(StandardCharsets.UTF_8);
+            String fileName = "stack_trace_" + System.currentTimeMillis() + ".txt";
+
+            adminChannel.sendMessage(alertMsg)
+                .addFiles(FileUpload.fromData(fileData, fileName))
+                .complete();
 
         } catch (Exception e) {
             log.error("發送 Discord 告警失敗: {}", e.getMessage(), e);
+        } finally {
+            if (event.requireShutdown()) {
+                eventPublisher.publishEvent(new SystemShutdownEvent(event.context(), 1));
+            }
         }
     }
 

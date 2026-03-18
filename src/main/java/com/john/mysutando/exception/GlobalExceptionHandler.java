@@ -141,7 +141,7 @@ public class GlobalExceptionHandler {
         log.error("發生未預期的錯誤", ex);
 
         eventPublisher.publishEvent(new DiscordEmergencyAlertEvent(
-            "API 炸裂: " + request.getRequestURI(), ex
+            "API 炸裂: " + request.getRequestURI(), ex, false
         ));
 
         ErrorRs errorRs = ErrorRs.builder()

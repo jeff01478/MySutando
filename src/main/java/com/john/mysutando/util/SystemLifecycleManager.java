@@ -17,15 +17,12 @@ public class SystemLifecycleManager {
 
     private final ApplicationContext applicationContext;
 
-    // 🌟 因為再也沒有人依賴這個 Manager 了，這裡的 JDA 就算不加 @Lazy 也不會報錯了！
-    // (但保險起見，大型專案有時還是會留著 @Lazy 防禦未來的異動)
     private final JDA jda;
 
-    // 🌟 變成一個監聽器，只要收到 SystemShutdownEvent 就開始關機！
     @EventListener
     public void onSystemShutdown(SystemShutdownEvent event) {
-        log.error("🚨 收到全域關機指令！準備執行系統停機程序...");
-        log.error("🛑 關機原因: {}", event.getReason());
+        log.error("準備執行系統停機程序...");
+        log.error("關機原因: {}", event.reason());
 
         try {
             if (jda != null) {
@@ -37,7 +34,7 @@ public class SystemLifecycleManager {
         }
 
         log.info("正在關閉 Spring Boot 應用程式容器...");
-        int code = SpringApplication.exit(applicationContext, () -> event.getExitCode());
+        int code = SpringApplication.exit(applicationContext, event::exitCode);
 
         log.info("JVM 即將終止，Exit Code: {}", code);
         System.exit(code);
