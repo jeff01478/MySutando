@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.john.mysutando.dto.QueuedLog;
 import com.john.mysutando.dto.rq.MessageRq;
+import com.john.mysutando.event.DiscordEmergencyAlertEvent;
+import com.john.mysutando.exception.ApiException;
 import com.john.mysutando.service.DcLogApiService;
 import com.john.mysutando.util.ApiClient;
 
@@ -40,6 +43,7 @@ public class DcLogApiServiceImpl implements DcLogApiService {
 
     private final ApiClient apiClient;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final AtomicBoolean isSyncing = new AtomicBoolean(true); // 預設啟動時是訊息同步中
     private final Queue<QueuedLog> retryQueue = new ConcurrentLinkedQueue<>();
@@ -108,8 +112,8 @@ public class DcLogApiServiceImpl implements DcLogApiService {
 
         try {
             sendToApi(logRequest);
-        } catch (Exception e) {
-            log.warn("發送失敗，加入重試佇列: {}", e.getMessage());
+        } catch (ApiException e) {
+            log.warn("發送失敗，加入重試佇列: {}", e.getMessage(), e);
             retryQueue.offer(logRequest);
         }
     }
@@ -167,9 +171,12 @@ public class DcLogApiServiceImpl implements DcLogApiService {
                 sendToApi(currentLog);
                 retryQueue.poll();
                 log.info("補送成功！剩餘: {}", retryQueue.size());
-
-            } catch (Exception e) {
+            } catch (ApiException e) {
                 log.warn("補送失敗 ({})，暫停重試，等待下個週期。", e.getMessage());
+                break;
+            } catch (Exception e) {
+                log.error("發生未知錯誤", e);
+                eventPublisher.publishEvent(new DiscordEmergencyAlertEvent("補送訊息炸裂", e, false));
                 break;
             }
         }
@@ -194,7 +201,8 @@ public class DcLogApiServiceImpl implements DcLogApiService {
                 log.info("備份檔案已刪除");
             }
         } catch (IOException e) {
-            log.error("讀取備份檔案失敗: {}", e.getMessage());
+            log.error("讀取備份檔案失敗: {}", e.getMessage(), e);
+            eventPublisher.publishEvent(new DiscordEmergencyAlertEvent("恢復備份紀錄炸裂", e, true));
         }
     }
 
@@ -210,7 +218,8 @@ public class DcLogApiServiceImpl implements DcLogApiService {
             objectMapper.writeValue(new File(BACKUP_FILE), retryQueue);
             log.info("備份成功！檔案位置: {}", new File(BACKUP_FILE).getAbsolutePath());
         } catch (IOException e) {
-            log.error("備份寫入失敗！資料可能會遺失: {}", e.getMessage());
+            log.error("備份寫入失敗！資料可能會遺失: {}", e.getMessage(), e);
+            eventPublisher.publishEvent(new DiscordEmergencyAlertEvent("訊息備份炸裂", e, false));
         }
     }
 }

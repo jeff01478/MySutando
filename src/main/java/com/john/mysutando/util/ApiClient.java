@@ -8,10 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.john.mysutando.exception.ApiException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,11 +72,12 @@ public class ApiClient {
             return response.getBody();
 
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("API 請求失敗 [{}]: {}, Body: {}", url, e.getStatusCode(), e.getResponseBodyAsString());
-            throw e;
-        } catch (Exception e) {
-            log.error("API 未知錯誤 [{}]: ", url, e);
-            throw e;
+            String errorMsg = String.format("API 請求失敗 [%s]: %s, Body: %s",
+                url, e.getStatusCode(), e.getResponseBodyAsString());
+            throw new ApiException(errorMsg, e);
+        } catch (RestClientException e) {
+            String errorMsg = String.format("API 網路連線異常 [%s]", url);
+            throw new ApiException(errorMsg, e);
         }
     }
 
