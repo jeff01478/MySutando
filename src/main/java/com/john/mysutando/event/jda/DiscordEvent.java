@@ -1,4 +1,4 @@
-package com.john.mysutando.event;
+package com.john.mysutando.event.jda;
 
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 

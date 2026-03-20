@@ -1,7 +1,7 @@
 package com.john.mysutando.config;
 
-import com.john.mysutando.event.EventManager;
-import lombok.AllArgsConstructor;
+import com.john.mysutando.event.jda.EventManager;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.JDA;
@@ -25,9 +25,10 @@ public class JDAConfig {
     @Bean
     public JDA jda() throws InterruptedException {
         JDA jda = JDABuilder.createDefault(botToken)
-                .addEventListeners(eventManager.getAllEventListener().toArray())
-                .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_WEBHOOKS)
-                .build();
+            .setEventManager(eventManager)
+            .addEventListeners(eventManager.getAllEventListener().toArray())
+            .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_WEBHOOKS)
+            .build();
 
         log.info("已啟動Bot");
         return jda;

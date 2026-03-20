@@ -1,4 +1,4 @@
-package com.john.mysutando.event;
+package com.john.mysutando.event.jda;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
