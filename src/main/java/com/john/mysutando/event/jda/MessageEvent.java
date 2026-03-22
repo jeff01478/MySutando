@@ -33,9 +33,11 @@ public class MessageEvent extends DiscordEvent {
 
     @Override
     public void onMessageUpdate(@Nonnull MessageUpdateEvent event) {
+        discordTextService.recordMessage(event.getMessage());
     }
 
     @Override
     public void onMessageDelete(@Nonnull MessageDeleteEvent event) {
+        discordTextService.recordDeletedMessage(event.getMessageId());
     }
 }

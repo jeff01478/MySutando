@@ -16,7 +16,6 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.Webhook;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 @Service
@@ -50,13 +49,8 @@ public class DiscordTextServiceImpl implements DiscordTextService {
 
     @Override
     @RequireFeature(GuildFeature.RECORD_DELETED)
-    public void recordDeletedMessage(Member member, Channel channel, String deletedMessage) {
-
-    }
-
-    @Override
-    @RequireFeature(GuildFeature.RECORD_EDITED)
-    public void recordEditedMessage(Member member, Channel channel, String originMessage) {
+    public void recordDeletedMessage(String deletedMessageId) {
+        dcLogApiService.deleteMessage(deletedMessageId);
 
     }
 
