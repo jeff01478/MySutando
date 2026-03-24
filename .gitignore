@@ -3,7 +3,6 @@
 !**/src/main/**/target/
 !**/src/test/**/target/
 **/application.yml
-**/src/test/
 merge_code.py
 project_source_code.txt
 

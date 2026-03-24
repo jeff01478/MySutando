@@ -46,7 +46,11 @@ public class ApiClient {
         return execute(url, HttpMethod.DELETE, null, headers, responseType);
     }
 
-    public <T, R> R execute(String url, HttpMethod method, T body, HttpHeaders headers, Class<R> responseType) {
+    public <T, R> R execute(String url,
+                            HttpMethod method,
+                            T body,
+                            HttpHeaders headers,
+                            Class<R> responseType) throws ApiException {
         log.info("start {} api", method.name());
         logRequest(url, body);
 
