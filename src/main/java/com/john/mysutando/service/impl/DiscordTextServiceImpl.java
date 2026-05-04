@@ -1,5 +1,8 @@
 package com.john.mysutando.service.impl;
 
+import com.john.mysutando.dto.rs.DcLogMessageRs;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -12,10 +15,6 @@ import com.john.mysutando.service.DcLogApiService;
 import com.john.mysutando.service.DiscordTextService;
 
 import lombok.RequiredArgsConstructor;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.Webhook;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 @Service
@@ -48,10 +47,18 @@ public class DiscordTextServiceImpl implements DiscordTextService {
     }
 
     @Override
-    @RequireFeature(GuildFeature.RECORD_DELETED)
-    public void recordDeletedMessage(String deletedMessageId) {
+    @RequireFeature(value = GuildFeature.RECORD_DELETED)
+    public void recordDeletedMessage(JDA jda, String deletedMessageId, String guildId) {
         dcLogApiService.deleteMessage(deletedMessageId);
+        DcLogMessageRs dcLogMessageRs = dcLogApiService.getDcLogMessage(deletedMessageId);
 
+        Guild guild = jda.getGuildById(guildId);
+
+        assert guild != null;
+        Member member = guild.getMemberById(dcLogMessageRs.getAuthor().getUserId());
+        TextChannel channel = guild.getTextChannelById("843637020127657994");
+
+        impersonateMember(member, channel, dcLogMessageRs.getContent());
     }
 
     @Override

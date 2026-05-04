@@ -38,6 +38,6 @@ public class MessageEvent extends DiscordEvent {
 
     @Override
     public void onMessageDelete(@Nonnull MessageDeleteEvent event) {
-        discordTextService.recordDeletedMessage(event.getMessageId());
+        discordTextService.recordDeletedMessage(event.getJDA(), event.getMessageId(), event.getGuild().getId());
     }
 }

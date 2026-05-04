@@ -7,6 +7,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.john.mysutando.dto.rs.DcLogMessageRs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -50,6 +51,12 @@ public class DcLogApiServiceImpl implements DcLogApiService {
     private final Queue<QueuedLog> liveBufferQueue = new ConcurrentLinkedQueue<>(); // 在訊息同步中的時候用來存放新的事件發送過來的訊息
 
     private final Object stateLock = new Object(); // 用來確保狀態切換執行續安全的鎖
+
+    @Override
+    public DcLogMessageRs getDcLogMessage(String messageId) {
+        String url = getBaseUrl(MESSAGE_PATH) + "/" + messageId;
+        return apiClient.get(url, null, DcLogMessageRs.class);
+    }
 
     @Override
     public void receiveMessage(MessageRq rq) {

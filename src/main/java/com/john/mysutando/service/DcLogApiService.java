@@ -3,8 +3,11 @@ package com.john.mysutando.service;
 import java.util.List;
 
 import com.john.mysutando.dto.rq.MessageRq;
+import com.john.mysutando.dto.rs.DcLogMessageRs;
 
 public interface DcLogApiService {
+    DcLogMessageRs getDcLogMessage(String messageId);
+
     void receiveMessage(MessageRq rq);
 
     void deleteMessage(String messageId);
